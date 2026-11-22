@@ -206,6 +206,15 @@ class MainActivity : Activity() {
             })
         }
 
+        if (page == "Home") {
+            root.addView(
+                button("+   IMPORT LINKS", { importLinks() }, true),
+                LinearLayout.LayoutParams(-1, dp(48)).apply {
+                    topMargin = dp(10)
+                }
+            )
+        }
+
         val scroll = ScrollView(this).apply {
             isFillViewport = true
             clipToPadding = false
@@ -288,15 +297,6 @@ class MainActivity : Activity() {
                     if (saved.size == 1) "saved link" else "saved links",
                     14f, muted
                 ))
-
-                content.addView(button(
-                    "+   IMPORT LINKS",
-                    { importLinks() },
-                    true
-                ), LinearLayout.LayoutParams(-1, dp(52)).apply {
-                    topMargin = dp(22)
-                    bottomMargin = dp(25)
-                })
 
                 sectionTitle("RECENTLY SAVED")
 
