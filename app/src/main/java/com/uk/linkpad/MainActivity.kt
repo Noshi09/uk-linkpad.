@@ -48,6 +48,13 @@ class MainActivity : Activity() {
         render()
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (::content.isInitialized) {
+            showContent()
+        }
+    }
+
     private fun dp(value: Int): Int =
         (value * resources.displayMetrics.density).toInt()
 
