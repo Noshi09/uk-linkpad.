@@ -27,7 +27,7 @@ class MainActivity : Activity() {
     private lateinit var content: LinearLayout
     private lateinit var search: EditText
 
-    private val lime = Color.rgb(190, 255, 65)
+    private val lime get() = fg
     private val bg get() = if (dark) Color.rgb(15, 17, 16) else Color.rgb(245, 247, 242)
     private val panel get() = if (dark) Color.rgb(27, 30, 28) else Color.WHITE
     private val fg get() = if (dark) Color.rgb(240, 244, 237) else Color.rgb(25, 30, 25)
@@ -99,7 +99,7 @@ class MainActivity : Activity() {
             textSize = 13f
             typeface = Typeface.DEFAULT_BOLD
             gravity = Gravity.CENTER
-            setTextColor(if (accent) Color.rgb(20, 25, 15) else fg)
+            setTextColor(if (accent) if (dark) Color.BLACK else Color.WHITE else fg)
             setBackgroundColor(if (accent) lime else panel)
             setPadding(dp(13), dp(10), dp(13), dp(10))
             setOnClickListener { action() }
