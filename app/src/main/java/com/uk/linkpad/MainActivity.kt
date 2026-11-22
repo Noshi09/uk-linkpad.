@@ -52,7 +52,7 @@ class MainActivity : Activity() {
             setTextColor(Color.WHITE)
         }
         val name = TextView(this).apply {
-            text = "UK LINKPAD"
+            text = "LP"
             textSize = 25f
             typeface = Typeface.DEFAULT_BOLD
             letterSpacing = 0.18f
@@ -155,7 +155,7 @@ class MainActivity : Activity() {
             orientation = LinearLayout.VERTICAL
         }
 
-        header.addView(text("UK LINKPAD", 13f, lime, true))
+        header.addView(text("LP", 13f, lime, true))
         header.addView(text(page, 29f, fg, true))
         header.addView(text("YOUR LINKS. YOUR CONTROL.", 10f, muted, true))
         root.addView(header)
@@ -269,7 +269,7 @@ class MainActivity : Activity() {
                 content.addView(text("STORAGE", 11f, lime, true))
                 content.addView(text("Saved links: ${saved.size}"))
                 content.addView(text("History records: ${history.size}"))
-                content.addView(text("UK LinkPad stores your data locally on this device.", 13f, muted))
+                content.addView(text("LP stores your data locally on this device.", 13f, muted))
                 content.addView(button("CLEAR ALL SAVED LINKS", { clearSaved() }))
             }
         }
