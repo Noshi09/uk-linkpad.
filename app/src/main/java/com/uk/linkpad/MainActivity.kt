@@ -39,6 +39,39 @@ class MainActivity : Activity() {
         render()
     }
 
+    private fun showSplash() {
+        val splash = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setBackgroundColor(Color.BLACK)
+        }
+        val logo = TextView(this).apply {
+            text = "↔"
+            textSize = 64f
+            gravity = Gravity.CENTER
+            setTextColor(Color.WHITE)
+        }
+        val name = TextView(this).apply {
+            text = "UK LINKPAD"
+            textSize = 25f
+            typeface = Typeface.DEFAULT_BOLD
+            letterSpacing = 0.18f
+            setTextColor(Color.WHITE)
+            gravity = Gravity.CENTER
+        }
+        val tagline = TextView(this).apply {
+            text = "YOUR LINKS. YOUR CONTROL."
+            textSize = 11f
+            setTextColor(Color.LTGRAY)
+            gravity = Gravity.CENTER
+            setPadding(0, dp(10), 0, 0)
+        }
+        splash.addView(logo)
+        splash.addView(name)
+        splash.addView(tagline)
+        setContentView(splash)
+    }
+
     private fun loadData() {
         saved.clear()
         history.clear()
@@ -96,12 +129,17 @@ class MainActivity : Activity() {
     ): TextView {
         return TextView(this).apply {
             text = label
-            textSize = 13f
+            textSize = 14f
             typeface = Typeface.DEFAULT_BOLD
             gravity = Gravity.CENTER
-            setTextColor(if (accent) if (dark) Color.BLACK else Color.WHITE else fg)
-            setBackgroundColor(if (accent) lime else panel)
-            setPadding(dp(13), dp(10), dp(13), dp(10))
+            minHeight = dp(52)
+            setTextColor(if (accent) Color.BLACK else fg)
+            background = android.graphics.drawable.GradientDrawable().apply {
+                setColor(if (accent) Color.WHITE else panel)
+                cornerRadius = dp(14).toFloat()
+                setStroke(dp(1), if (accent) Color.WHITE else muted)
+            }
+            setPadding(dp(18), dp(13), dp(18), dp(13))
             setOnClickListener { action() }
         }
     }
@@ -204,7 +242,8 @@ class MainActivity : Activity() {
             }
 
             "Saved" -> {
-                content.addView(button("+  ADD / BULK IMPORT", { importLinks() }, true))
+                content.addView(button("+  IMPORT LINKS", { importLinks() }, true))
+                content.addView(button("CLEAR ALL", { clearAll() }))
                 content.addView(text("${saved.size} saved links", 13f, muted))
                 val filtered = saved.filter { it.contains(searchText, true) }
                 if (filtered.isEmpty()) content.addView(text("No saved links found.", 15f, muted))
@@ -384,6 +423,21 @@ class MainActivity : Activity() {
                 history.clear()
                 saveData()
                 showContent()
+            }
+            .show()
+    }
+
+    private fun clearAll() {
+        AlertDialog.Builder(this)
+            .setTitle("Clear everything?")
+            .setMessage("This removes all saved links AND opening history. This cannot be undone.")
+            .setNegativeButton("CANCEL", null)
+            .setPositiveButton("CLEAR ALL") { _, _ ->
+                saved.clear()
+                history.clear()
+                saveData()
+                showContent()
+                Toast.makeText(this, "All links and history cleared", Toast.LENGTH_SHORT).show()
             }
             .show()
     }
