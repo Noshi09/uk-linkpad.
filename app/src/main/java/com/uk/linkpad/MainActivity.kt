@@ -420,7 +420,7 @@ class MainActivity : Activity() {
         val opened = history.any { it.first == url }
         card.addView(text(
             if (opened) "OPENED" else "SAVED LINK",
-            10f, muted, true
+            10f, if (opened) Color.parseColor("#30D158") else muted, true
         ))
 
         val actions = LinearLayout(this).apply {
