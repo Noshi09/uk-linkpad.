@@ -362,6 +362,7 @@ class MainActivity : Activity() {
             startActivity(intent)
             history.add(url to System.currentTimeMillis())
             saveData()
+            showContent()
             Toast.makeText(this, "Added to history", Toast.LENGTH_SHORT).show()
         } catch (_: Exception) {
             Toast.makeText(this, "Unable to open link", Toast.LENGTH_SHORT).show()
