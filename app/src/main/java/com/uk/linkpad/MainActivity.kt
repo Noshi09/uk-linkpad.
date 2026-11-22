@@ -494,9 +494,10 @@ class MainActivity : Activity() {
         dialog.show()
     }
 
+
     private fun importLinks() {
         val input = EditText(this).apply {
-            hint = "Paste one or many URLs here..."
+            hint = "Paste URLs here..."
             minLines = 5
             gravity = Gravity.TOP
             textSize = 14f
@@ -504,10 +505,23 @@ class MainActivity : Activity() {
             setHintTextColor(muted)
         }
 
+        val checkSites = CheckBox(this).apply {
+            text = "Check websites and import successful links only"
+            isChecked = true
+            setTextColor(fg)
+        }
+
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(8), dp(20), dp(8))
+            addView(input)
+            addView(checkSites)
+        }
+
         val dialog = AlertDialog.Builder(this)
-            .setTitle("Import links")
-            .setMessage("Paste URLs separated by new lines, spaces or commas.")
-            .setView(input)
+            .setTitle("Refine & import")
+            .setMessage("Paste URLs separated by spaces, commas or new lines.")
+            .setView(layout)
             .setNegativeButton("CANCEL", null)
             .setPositiveButton("IMPORT", null)
             .create()
@@ -517,38 +531,130 @@ class MainActivity : Activity() {
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(muted)
 
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                val parts = input.text.toString().split(Regex("[\\s,;]+"))
-                var added = 0
-                var skipped = 0
-
-                parts.map { it.trim().trim('"', '\'') }
+                val parts = input.text.toString()
+                    .split(Regex("[\\s,;]+"))
+                    .map { it.trim().trim('"', '\'') }
                     .filter { it.isNotBlank() }
-                    .forEach { raw ->
-                        val url = normalizeUrl(raw)
-                        if (url != null && !saved.contains(url)) {
-                            saved.add(url)
-                            added++
+
+                val candidates = mutableListOf<String>()
+                val seen = mutableSetOf<String>()
+                var invalid = 0
+                var duplicates = 0
+
+                parts.forEach { raw ->
+                    val url = normalizeUrl(raw)
+                    if (url == null) {
+                        invalid++
+                    } else if (
+                        saved.any { it.equals(url, true) } ||
+                        !seen.add(url.lowercase())
+                    ) {
+                        duplicates++
+                    } else {
+                        candidates.add(url)
+                    }
+                }
+
+                if (candidates.isEmpty()) {
+                    dialog.dismiss()
+                    Toast.makeText(this, "No new valid links found", Toast.LENGTH_LONG).show()
+                    return@setOnClickListener
+                }
+
+                val shouldCheck = checkSites.isChecked
+                dialog.dismiss()
+
+                val progress = android.app.ProgressDialog(this).apply {
+                    setTitle("Refining links")
+                    setMessage("Checking websites. Please wait...")
+                    setCancelable(false)
+                    show()
+                }
+
+                Thread {
+                    val accepted = mutableListOf<String>()
+                    var working = 0
+                    var restricted = 0
+                    var missing = 0
+                    var failed = 0
+
+                    candidates.forEach { url ->
+                        if (!shouldCheck) {
+                            accepted.add(url)
                         } else {
-                            skipped++
+                            val code = checkImportedUrl(url)
+                            when {
+                                code != null && code in 200..399 -> {
+                                    working++
+                                    accepted.add(url)
+                                }
+                                code == 401 || code == 403 ||
+                                code == 405 || code == 429 -> restricted++
+                                code == 404 || code == 410 -> missing++
+                                else -> failed++
+                            }
                         }
                     }
 
-                saveData()
-                page = "Saved"
-                searchText = ""
-                render()
+                    runOnUiThread {
+                        progress.dismiss()
 
-                Toast.makeText(
-                    this,
-                    "$added added, $skipped skipped",
-                    Toast.LENGTH_LONG
-                ).show()
+                        var added = 0
+                        accepted.forEach { url ->
+                            if (saved.none { it.equals(url, true) }) {
+                                saved.add(url)
+                                added++
+                            }
+                        }
 
-                dialog.dismiss()
+                        saveData()
+                        page = "Saved"
+                        searchText = ""
+                        render()
+
+                        val report = buildString {
+                            appendLine("Added: $added")
+                            appendLine("Duplicates: $duplicates")
+                            appendLine("Invalid URLs: $invalid")
+                            if (shouldCheck) {
+                                appendLine("Working: $working")
+                                appendLine("Restricted: $restricted")
+                                appendLine("Missing pages: $missing")
+                                append("Connection failures: $failed")
+                            } else {
+                                append("Website checks skipped")
+                            }
+                        }
+
+                        AlertDialog.Builder(this)
+                            .setTitle("Import complete")
+                            .setMessage(report)
+                            .setPositiveButton("DONE", null)
+                            .show()
+                    }
+                }.start()
             }
         }
 
         dialog.show()
+    }
+
+    private fun checkImportedUrl(url: String): Int? {
+        var connection: java.net.HttpURLConnection? = null
+        return try {
+            connection = java.net.URL(url).openConnection()
+                as java.net.HttpURLConnection
+            connection.connectTimeout = 5000
+            connection.readTimeout = 5000
+            connection.instanceFollowRedirects = true
+            connection.setRequestProperty("User-Agent", "LP Android App")
+            connection.requestMethod = "GET"
+            connection.responseCode
+        } catch (_: Exception) {
+            null
+        } finally {
+            connection?.disconnect()
+        }
     }
 
     private fun normalizeUrl(raw: String): String? {
