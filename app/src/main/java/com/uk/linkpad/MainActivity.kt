@@ -245,6 +245,11 @@ class MainActivity : Activity() {
         val address = text(url, 13f, lime)
         address.typeface = Typeface.MONOSPACE
         card.addView(address)
+        val opened = history.any { it.first == url }
+        card.addView(text(
+            if (opened) "✓ OPENED" else "• NOT OPENED",
+            11f, if (opened) lime else muted, true
+        ))
 
         val actions = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
